@@ -5,7 +5,7 @@ export default function DonationScreen() {
         <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-            <Text>Wasteless App Workspace</Text>
+            <Text>Wasteless App Workspace for Donations</Text>
         </View>
     );
 }
