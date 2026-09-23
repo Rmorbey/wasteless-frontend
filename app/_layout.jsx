@@ -65,11 +65,11 @@ export default function RootLayout() {
     return (
         <AuthContext.Provider value={{ token, login, register, logout }}>
             <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Protected guard={!!token} redirectTo="/(auth)/login">
+                <Stack.Protected guard={!token} redirectTo="/(auth)/login">
                     <Stack.Screen name="(tabs)" />
                 </Stack.Protected>
 
-                <Stack.Protected guard={!token} redirectTo="/(tabs)">
+                <Stack.Protected guard={!!token} redirectTo="/(tabs)">
                     <Stack.Screen name="(auth)/login" />
                     <Stack.Screen name="(auth)/signup" />
                 </Stack.Protected>
