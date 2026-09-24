@@ -65,11 +65,12 @@ export default function RootLayout() {
     return (
         <AuthContext.Provider value={{ token, login, register, logout }}>
             <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Protected guard={!!token} redirectTo="/(auth)/login">
+                {/* When auth is up and working the below guard={!!token} will need to look like that, set up like this, so we can work on private tab files */}
+                <Stack.Protected guard={!token} redirectTo="/(auth)/login">
                     <Stack.Screen name="(tabs)" />
                 </Stack.Protected>
-
-                <Stack.Protected guard={!token} redirectTo="/(tabs)">
+                {/* When auth is up and working the below guard={!token} will need to look like that */}
+                <Stack.Protected guard={!!token} redirectTo="/(tabs)">
                     <Stack.Screen name="(auth)/login" />
                     <Stack.Screen name="(auth)/signup" />
                 </Stack.Protected>
