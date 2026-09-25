@@ -1,6 +1,8 @@
 import { Text, View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from 'react-native-maps'
+import { getNearbyDonationLocations } from "../services/giveFoodApi";
+import { findDonationMatches } from "../utils/matchDonations";
 
 export default function DonationScreen() {
     const [postcode, setPostcode] = useState('')
@@ -9,9 +11,26 @@ export default function DonationScreen() {
     const [error, setError] = useState('')
     const mapRef = useRef(null)
 
-    const mockPantryItems = ['Milk', 'Bread', 'Beans', 'Tomatoes']
+    const mockPantryItems = [{
+            id: '1',
+            name: 'Milk',
+            quantity: '1',
+            expiry: '2026-09-27',
+        },
+        {
+            id: '2',
+            name: 'Eggs',
+            quantity: '6',
+            expiry: '2026-10-01',
+        },
+        {
+            id: '3',
+            name: 'Bread',
+            quantity: '1',
+            expiry: '2026-09-28',
+        }]
 
-    async function handleSearch(postcode) {
+    async function handleSearch() {
         if (!postcode.trim()){
             setError('Please enter a postcode!')
             return
@@ -20,9 +39,8 @@ export default function DonationScreen() {
             setLoading(true)
             setError('')
 
-            const response = await fetch(`https://www.givefood.org.uk/api/2/locations/search/?address=${postcode}`)
-            const data = await response.json()
-
+            const data = await getNearbyDonationLocations(postcode)
+            
             setLocations(data)
         } catch (error) {
             setError(error.message)
@@ -31,7 +49,7 @@ export default function DonationScreen() {
         }
     }
 
-    function getCordinates(location){
+    function getCoordinates(location){
         if (!location.lat_lng){
             return null
         }
@@ -47,15 +65,15 @@ export default function DonationScreen() {
             return
         }
 
-        const cordinates = locations
-        .map(getCordinates)
+        const coordinates = locations
+        .map(getCoordinates)
         .filter(Boolean)
 
-        if(!cordinates.length){
+        if(!coordinates.length){
             return
         }
 
-        mapRef.current.fitToCordinates(cordinates, {
+        mapRef.current.fitToCoordinates(coordinates, {
             edgePadding: {
                 top: 50,
                 right: 50,
@@ -68,18 +86,18 @@ export default function DonationScreen() {
 
     function renderLocation({ item }){
         const needsString = item.needs?.needs || ""
-        const matches = mockPantryItems.filter(item => needsString.toLowerCase().includes(item.toLowerCase()))
+        const matches = findDonationMatches(mockPantryItems, needsString)
         const needs = needsString.split('\n').filter(Boolean)
 
         return ( 
-            <View>
-                <Text>
+            <View style={styles.card}>
+                <Text style={styles.foodBankName}>
                     {item.foodbank?.name || item.name}
                 </Text>
-                <Text>
+                <Text style={styles.distance}>
                     {item.distance_mi ? `${item.distance_mi} miles away` : ''}
                 </Text>
-                <Text>
+                <Text style={styles.sectionTitle}>
                     Currently needed
                 </Text>
                 {needs.slice(0, 5).map((need, index) => (
@@ -88,8 +106,8 @@ export default function DonationScreen() {
                     </Text>
                 ))}
                 {matches.length > 0 ? (
-                    <View>
-                        <Text>
+                    <View style={styles.matchBox}>
+                        <Text style={styles.matchTitle}>
                             You can donate {matches.length}{" "}
                             {matches.length === 1 ? 'item' : 'items'}
                         </Text>
@@ -97,56 +115,57 @@ export default function DonationScreen() {
                             <Text key={item.id}>
                                + {item.name}
                             </Text>
-                        
                         ))}
                     </View>
                 ) : (
-                    <Text>
+                    <Text style={styles.noMatch}>
                         No pantry matches found
                     </Text>
-                ) }
+                )}
             </View>
         )
     }
 
     return (
-        <View>
-            <Text>
+        <View style={styles.container}>
+            <Text style={styles.title}>
                 Find somewhere to donate.
             </Text>
-            <Text>
-                Enter your postcode or location to find nearby foodbanks and see what you can donate from your pantry.
+            <Text style={styles.subtitle}>
+                Enter your postcode or location to find nearby foodbanks 
+                and see what you can donate from your pantry.
             </Text>
 
-            <View>
+            <View style={styles.searchContainer}>
                 <TextInput 
+                    style={styles.input}
                     value={postcode} 
                     oncChangeText={setPostcode}
                     placeholder="Enter postcode or location"
                     autoCapitalize="characters"
                 />
 
-                <Pressable onPress={handleSearch}>
-                    <Text>
+                <Pressable style={styles.searchButton} onPress={handleSearch}>
+                    <Text style={styles.searchButtonText}>
                         Search
                     </Text>
                 </Pressable>
             </View>
 
             {error && (
-                <Text>
+                <Text style={styles.error}>
                     {error}
                 </Text>
             )}
             {loading && (
-                <ActivityIndicator
-                    size='large'
-                />
+                <ActivityIndicator size='large' />
             )}
+
             {locations.length > 0 && (
                 <> 
                     <MapView
                         ref={mapRef}
+                        style={styles.map}
                         initialRegion={{ 
                             latitude: 54.5,
                             longitude: -3,
@@ -155,25 +174,25 @@ export default function DonationScreen() {
                         }}
                     >
                         {locations.map((location) => {
-                            const cordinates = getCordinates(location)
-                            if(!cordinates){
+                            const coordinates = getCoordinates(location)
+                            if(!coordinates){
                                 return null
                             }
                             const matches = findDonationMatches(
-                                pantryItems,
+                                mockPantryItems,
                                 location.needs?.needs
                             )
                             return (
                                 <Marker
                                     key={location.id}
-                                    coordinate={cordinates}
+                                    coordinate={coordinates}
                                     title={location.foodbank?.name || location.name}
-                                    description={matches.length ? `${matches.length} pantry items match` : 'view donation needs'}
+                                    description={matches.length ? `${matches.length} pantry items match` : 'View donation needs'}
                                 />
                             )
                         })}
                     </MapView>
-                    <Text>
+                    <Text style={styles.nearbyTitle}>
                         Nearby donation locations
                     </Text>
                     <FlatList
@@ -188,3 +207,90 @@ export default function DonationScreen() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 16,
+        backgroundColor: '#fff'
+    },
+    title: {
+        fontSize: 26,
+        fontWeight: 'bold',
+        marginBottom: 6
+    },
+    subtitle: {
+        fontSize: 15,
+        marginBottom: 6
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        gap: 10,
+        marginBottom: 15
+    },
+    input: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 10,
+        paddingHorizontal:12,
+        paddingVertical: 10
+    },
+    searchButton: {
+        backgroundColor: '#333',
+        paddingHorizontal: 18,
+        justifyContent: 'center',
+        borderRadius: 10
+    },
+    searchButtonText: {
+        color: '#fff',
+        fontWeight: 'bold'
+    },
+    map: {
+        width: '100%',
+        height: 260,
+        borderRadius: 12,
+        marginBottom: 18
+    },
+    nearbyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 10
+    },
+    card: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12
+    },
+    foodBankName: {
+        fontSize: 19,
+        fontWeight: 'bold'
+    },
+    distance: {
+        marginBottom: 12,
+        opacity: 0.7
+    },
+    sectionTitle: {
+        fontWeight: 'bold',
+        marginBottom: 5
+    },
+    matchBox: {
+        marginTop: 14,
+        padding: 12,
+        backgroundColor: '#eee',
+        borderRadius: 10
+    },
+    matchTitle: {
+        fontWeight: 'bold',
+        marginBottom: 5
+    },
+    noMatch: {
+        marginTop: 10,
+        opacity: 0.6
+    },
+    error: {
+        marginBottom: 10
+    }
+})
