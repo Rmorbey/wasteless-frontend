@@ -1,3 +1,20 @@
+export function getNeedsStatus(needsString) {
+    if (!needsString) {
+        return "unknown"
+    }
+    const value = needsString.trim().toLowerCase()
+    if (value === "unknown") {
+        return "unknown"
+    }
+    if (value === "facebook") {
+        return "unknown"
+    }
+    if (value === "nothing") {
+        return "nothing"
+    }
+    return "available"
+}
+
 function normalizeItem(item) {
     return item
         .toLowerCase()
@@ -13,7 +30,8 @@ function itemsMatch(pantryItem, neededItem) {
 }
 
 export function findDonationMatches(pantryItems, needsString) {
-    if(!needsString) {
+    const status = getNeedsStatus(needsString)
+    if (status !== "available") {
         return []
     }
     const neededItems = needsString
