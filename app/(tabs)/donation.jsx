@@ -1,8 +1,8 @@
 import { Text, View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from 'react-native-maps'
-import { getNearbyDonationLocations } from "../services/giveFoodApi";
-import { findDonationMatches } from "../utils/matchDonations";
+import { getNearbyDonationLocations } from "../../services/giveFoodApi";
+import { findDonationMatches } from "../../utils/matchDonations";
 
 export default function DonationScreen() {
     const [postcode, setPostcode] = useState('')
@@ -41,7 +41,7 @@ export default function DonationScreen() {
 
             const data = await getNearbyDonationLocations(postcode)
             
-            setLocations(data)
+            setLocations(data.slice(0, 5))
         } catch (error) {
             setError(error.message)
         } finally {
@@ -140,7 +140,7 @@ export default function DonationScreen() {
                 <TextInput 
                     style={styles.input}
                     value={postcode} 
-                    oncChangeText={setPostcode}
+                    onChangeText={setPostcode}
                     placeholder="Enter postcode or location"
                     autoCapitalize="characters"
                 />
