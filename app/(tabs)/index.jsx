@@ -1,5 +1,7 @@
 import { Text, View, TextInput, FlatList, Pressable, Modal, StyleSheet, Alert } from "react-native";
 import { useState } from "react";
+import * as ImagePicker from 'expo-image-picker'
+import { ActivityIndicator } from "react-native";
 
 export default function PantryScreen() {
     const [pantryItems, setPantryItems] = useState([
@@ -47,6 +49,8 @@ export default function PantryScreen() {
     const [quantity, setQuanity] = useState('')
     const [expiry, setExpiry] = useState('')
 
+    const [scanning, setScanning] = useState(false)
+
     function handleAddFood(){
         if(!foodName || !expiry){
             Alert.alert(
@@ -71,6 +75,38 @@ export default function PantryScreen() {
         setManualFormVisible(false)
     }
 
+    async function handleScanReceiptPress() {
+
+        setModalVisible(false)
+
+        try {
+            setScanning(true)
+
+            const hostedImageUrl = 'https://i.ibb.co/LD3WskXw/PXL-20260925-141424333.jpg'
+
+            const response = await fetch(`${BACKEND_URL}/scan-receipt`, {
+                method: 'POST',
+                headers: { 'Content-Type': "application/json" },
+                body: JSON.stringify({ imageUrl: hostedImageUrl })
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed parsing receipt data values")
+            }
+
+            await fetchPantryFromBackend();
+
+            Alert.alert("Success", "Receipt processed and items added to your pantry")
+        } catch (error) {
+            console.error(error)
+            Alert.alert("OCR Error", "Failed to extract items. Ensure image is clear.")
+        } finally {
+            setScanning(false)
+        }
+    }
+
     function renderPantryItem({ item }){
         return (
             <View style={styles.foodCard}>
@@ -88,6 +124,14 @@ export default function PantryScreen() {
 
     return (
         <View style={styles.container}>
+
+            {scanning && (
+                <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size='large' color="#4CAF50" />
+                    <Text style={styles.loadingText}>Reading Receipt...</Text>
+                </View>
+            )}
+
             <View style={styles.header}>
                 <View>
                     <Text style={styles.title}>My Pantry</Text>
@@ -126,6 +170,14 @@ export default function PantryScreen() {
                                         Enter an item, quanity and expiry date.
                                     </Text>
                                 </Pressable>
+
+                                <Pressable style={[styles.optionButton, { marginTop: 12 }]} onPress={handleScanReceiptPress}>
+                                    <Text style={styles.optionTitle}>Scan Receipt.</Text>
+                                    <Text style={styles.optionDescription}>
+                                        Select a photo of your grocery receipt.
+                                    </Text>
+                                </Pressable>
+
                                 <Pressable style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                                     <Text style={styles.cancelText}>
                                         Cancel
@@ -295,5 +347,19 @@ const styles = StyleSheet.create({
     },
     cancelText: {
         color: '#666'
-    }
+    },
+    loadingOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+    },
+    loadingText: {
+        marginTop: 14,
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#333',
+    },
 })
