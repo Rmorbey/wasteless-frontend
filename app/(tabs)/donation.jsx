@@ -1,8 +1,8 @@
-import { Text, View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from "react-native";
+import { Text, View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet, Linking } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from 'react-native-maps'
 import { getNearbyDonationLocations } from "../../services/giveFoodApi";
-import { findDonationMatches } from "../../utils/matchDonations";
+import { findDonationMatches, getNeedsStatus } from "../../utils/matchDonations";
 
 export default function DonationScreen() {
     const [postcode, setPostcode] = useState('')
@@ -41,7 +41,7 @@ export default function DonationScreen() {
 
             const data = await getNearbyDonationLocations(postcode)
             
-            setLocations(data.slice(0, 5))
+            setLocations(data)
         } catch (error) {
             setError(error.message)
         } finally {
@@ -84,10 +84,21 @@ export default function DonationScreen() {
         })
     }, [locations])
 
+    async function openFoodBankLink(url) {
+        if (!url) {
+            return
+        }
+        const supported = await Linking.canOpenURL(url)
+        if (supported) {
+            await Linking.openURL(url)
+        }
+    }
+
     function renderLocation({ item }){
         const needsString = item.needs?.needs || ""
+        const needsStatus = getNeedsStatus(needsString)
         const matches = findDonationMatches(mockPantryItems, needsString)
-        const needs = needsString.split('\n').filter(Boolean)
+        const needs = needsStatus === "available" ? needsString.split('\n').filter(Boolean) : []
 
         return ( 
             <View style={styles.card}>
@@ -97,18 +108,58 @@ export default function DonationScreen() {
                 <Text style={styles.distance}>
                     {item.distance_mi ? `${item.distance_mi} miles away` : ''}
                 </Text>
+                {item.address && (
+                    <Text style={styles.address}>
+                        {item.address}
+                    </Text>
+                )}
                 <Text style={styles.sectionTitle}>
                     Currently needed
                 </Text>
-                {needs.slice(0, 5).map((need, index) => (
-                    <Text key={index}>
-                        • {need}
-                    </Text>
-                ))}
-                {matches.length > 0 ? (
+                {needsStatus === "available" && (
+                    <>
+                        {needs.map(
+                            (need, index) => (
+                                <Text key={index}>
+                                    • {need}
+                                </Text>
+                            )
+                        )}
+                    </>
+                )}
+                {needsStatus === "unknown" && (
+                    <View style={styles.unavailableBox}>
+                        <Text style={styles.unavailableTitle}>
+                            Current donation needs aren't available.
+                        </Text>
+                        <Text style={styles.unavailableText}>
+                            Check the food bank's latest information before donating.
+                        </Text>
+                        {item.fallbackUrl && (
+                            <Pressable style={styles.linkButton} onPress={() => openFoodBankLink(item.fallbackUrl)}>
+                                <Text style={styles.linkButtonText}>
+                                    View latest information
+                                </Text>
+                            </Pressable>
+                        )}
+                    </View>
+                )}
+
+                {needsStatus === "nothing" && (
+                    <View style={styles.unavailableBox}>
+                        <Text style={styles.unavailableTitle}>
+                            No items currently listed as needed.
+                        </Text>
+                        <Text style={styles.unavailableText}>
+                            Check with the food bank before making a donation.
+                        </Text>
+                    </View>
+                )}
+
+                {needsStatus === "available" && matches.length > 0 && (
                     <View style={styles.matchBox}>
                         <Text style={styles.matchTitle}>
-                            You can donate {matches.length}{" "}
+                            You can donate{" "} {matches.length}{" "}
                             {matches.length === 1 ? 'item' : 'items'}
                         </Text>
                         {matches.map(item => (
@@ -117,10 +168,11 @@ export default function DonationScreen() {
                             </Text>
                         ))}
                     </View>
-                ) : (
-                    <Text style={styles.noMatch}>
+                )}
+                {needsStatus === "available" && matches.length === 0 && (
+                   <Text style={styles.noMatch}>
                         No pantry matches found
-                    </Text>
+                    </Text> 
                 )}
             </View>
         )
@@ -178,16 +230,23 @@ export default function DonationScreen() {
                             if(!coordinates){
                                 return null
                             }
-                            const matches = findDonationMatches(
-                                mockPantryItems,
-                                location.needs?.needs
-                            )
+                            const needsString = location.needs?.needs || ""
+                            const status = getNeedsStatus(needsString)
+                            const matches = findDonationMatches(mockPantryItems, needsString)
+                            let description = "View donation needs"
+                            if (status === "unknown") {
+                                description = "Current needs unavailable"
+                            } else if (status === "nothing") {
+                                description = "No current items listed"
+                            } else if (matches.legnth > 0) {
+                                description = `${matches.length} pantry items match`
+                            }
                             return (
                                 <Marker
                                     key={location.id}
                                     coordinate={coordinates}
                                     title={location.foodbank?.name || location.name}
-                                    description={matches.length ? `${matches.length} pantry items match` : 'View donation needs'}
+                                    description={description}
                                 />
                             )
                         })}
@@ -197,7 +256,7 @@ export default function DonationScreen() {
                     </Text>
                     <FlatList
                         data={locations}
-                        keyExtractor={item => item.id}
+                        keyExtractor={item => String(item.id)}
                         renderItem={renderLocation}
                         contentContainerStyle={{paddingBottom: 40}}
 
@@ -269,8 +328,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
     distance: {
-        marginBottom: 12,
+        marginTop: 3,
         opacity: 0.7
+    },
+    address: {
+        marginTop: 5,
+        marginBottom: 12
     },
     sectionTitle: {
         fontWeight: 'bold',
@@ -289,6 +352,30 @@ const styles = StyleSheet.create({
     noMatch: {
         marginTop: 10,
         opacity: 0.6
+    },
+    unavailableBox: {
+        padding: 12,
+        marginTop: 4,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10
+    },
+    unavailableTitle: {
+        fontWeight: 'bold',
+        marginBottom: 4
+    },
+    unavailableText: {
+        marginBottom: 10
+    },
+    linkButton: {
+        backgroundColor: '#333',
+        padding: 10,
+        borderRadius: 8,
+        alignItems: 'center'
+    },
+    linkButtonText: {
+        color: '#fff',
+        fontWeight: 'bold'
     },
     error: {
         marginBottom: 10
