@@ -14,4 +14,12 @@ describe("PantryScreen", () => {
         expect(screen.getByText("Eggs")).toBeTruthy()
         expect(screen.getByText("Bread")).toBeTruthy()
     })
+
+    it("opens the add food modal", async () => {
+        await render(<PantryScreen />)
+        await fireEvent.press(screen.getByText("+ Add Food"))
+        expect(screen.getByText("Add Food.")).toBeTruthy()
+        expect(screen.getByText("Add Manually.")).toBeTruthy()
+        expect(screen.getByText("Cancel")).toBeTruthy()
+    })
 })
