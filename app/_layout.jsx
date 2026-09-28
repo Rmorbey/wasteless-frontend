@@ -3,8 +3,8 @@ import { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext({
     token: null,
-    login: async (email, password) => {},
-    register: async (email, password) => {},
+    login: async (username, password) => {},
+    register: async (username, password) => {},
     logout: () => {},
 });
 
@@ -15,12 +15,12 @@ export default function RootLayout() {
 
     const API_URL = "http://10.0.2.2:INSERT_PORT_NUMBER_OF_BACKEND";
 
-    const login = async (email, password) => {
+    const login = async (username, password) => {
         try {
             const response = await fetch(`${API_URL}/users/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, password }),
             });
 
             const data = await response.json();
@@ -37,12 +37,12 @@ export default function RootLayout() {
         }
     };
 
-    const register = async (email, password) => {
+    const register = async (username, password) => {
         try {
             const response = await fetch(`${API_URL}/users/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ username, password }),
             });
 
             const data = await response.json();

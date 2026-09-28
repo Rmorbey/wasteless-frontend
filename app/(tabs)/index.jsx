@@ -1,57 +1,21 @@
 import { Text, View, TextInput, FlatList, Pressable, Modal, StyleSheet, Alert } from "react-native";
 import { useState } from "react";
-import * as ImagePicker from 'expo-image-picker'
 import { ActivityIndicator } from "react-native";
+import { usePantry } from "./_layout";
+import { useAuth } from "../_layout";
 
 export default function PantryScreen() {
-    const [pantryItems, setPantryItems] = useState([
-        {
-            id: '1',
-            name: 'Milk',
-            quantity: '1',
-            expiry: '2026-09-27',
-        },
-        {
-            id: '2',
-            name: 'Eggs',
-            quantity: '6',
-            expiry: '2026-10-01',
-        },
-        {
-            id: '3',
-            name: 'Bread',
-            quantity: '1',
-            expiry: '2026-09-28',
-        },
-        {
-            id: '4',
-            name: 'Cheese',
-            quantity: '1',
-            expiry: '2026-10-03',
-        },
-        {
-            id: '5',
-            name: 'Carrot',
-            quantity: '1',
-            expiry: '2026-10-08',
-        },
-                {
-            id: '6',
-            name: 'Onion',
-            quantity: '1',
-            expiry: '2026-10-11',
-        },
-    ])
+    const { pantryItems, fetchPantryFromBackend } = usePantry()
+    const { token } = useAuth()
 
     const [manualFormVisible, setManualFormVisible] = useState(false)
     const [modalVisible, setModalVisible] = useState(false)
     const [foodName, setFoodName] = useState('')
     const [quantity, setQuanity] = useState('')
     const [expiry, setExpiry] = useState('')
-
     const [scanning, setScanning] = useState(false)
 
-    function handleAddFood(){
+    async function handleAddFood(){
         if(!foodName || !expiry){
             Alert.alert(
                 'Missing information.',
@@ -59,20 +23,40 @@ export default function PantryScreen() {
             )
             return
         }
-        const newFood = {
-            id: Date.now().toString(),
-            name: foodName,
-            quantity: quantity || '1',
-            expiry: expiry,
+
+        try {
+            const response = await fetch(`http://localhost/pantry`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    name: foodName,
+                    quantity: parseInt(quantity) || 1,
+                    expiry_date: expiry,
+                })
+            })
+
+            const data = await response.json()
+
+            if(!response.ok) {
+                throw new Error(data.error || "Failed to add item to pantry.")
+            }
+
+            await fetchPantryFromBackend()
+
+            setFoodName('')
+            setQuanity('')
+            setExpiry('')
+            setManualFormVisible(false)
+            setModalVisible(false)
+
+            Alert.alert("Success", `${foodName} added to your pantry.`)
+        } catch (error) {
+            console.error('Manual add food failed:', error.message)
+            Alert.alert('Error', 'Could not add item to server.')
         }
-        setPantryItems((currentItems) => [
-            ...currentItems,
-            newFood,
-        ])
-        setFoodName('')
-        setQuanity('')
-        setExpiry('')
-        setManualFormVisible(false)
     }
 
     async function handleScanReceiptPress() {
@@ -84,9 +68,12 @@ export default function PantryScreen() {
 
             const hostedImageUrl = 'https://i.ibb.co/LD3WskXw/PXL-20260925-141424333.jpg'
 
-            const response = await fetch(`${BACKEND_URL}/scan-receipt`, {
+            const response = await fetch(`http://localhost/scan-receipt`, {
                 method: 'POST',
-                headers: { 'Content-Type': "application/json" },
+                headers: { 
+                    'Content-Type': "application/json",
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ imageUrl: hostedImageUrl })
             })
 
@@ -101,7 +88,7 @@ export default function PantryScreen() {
             Alert.alert("Success", "Receipt processed and items added to your pantry")
         } catch (error) {
             console.error(error)
-            Alert.alert("OCR Error", "Failed to extract items. Ensure image is clear.")
+            Alert.alert("Scanning Error", "Failed to extract items. Ensure image is clear.")
         } finally {
             setScanning(false)
         }
