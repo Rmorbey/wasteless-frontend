@@ -97,15 +97,16 @@ export default function PantryScreen() {
     }
 
     function renderPantryItem({ item }){
+        const formattedDate = item.expiry_date ? item.expiry_date.split('T')[0] : ''
         return (
             <View style={styles.foodCard}>
-                <View>
-                    <Text style={styles.foodName}>{item.name}</Text>
+                <View style={styles.cardMainContent}>
+                    <Text style={styles.foodName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
                     <Text style={styles.foodDetails}>Quantity: {item.quantity}</Text>
                 </View>
-                <View>
+                <View style={styles.cardExpiryColumn}>
                     <Text style={styles.expiryLabel}>Expires:</Text>
-                    <Text style={styles.expiryDate}>{item.expiry_date}</Text>
+                    <Text style={styles.expiryDate}>{formattedDate}</Text>
                 </View>
             </View>
         )
@@ -252,29 +253,51 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     foodCard: {
-        backgroundColor: 'white',
-        padding: 16,
+        backgroundColor: '#ffffff',
         borderRadius: 12,
+        padding: 16,
+        marginBottom: 10,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        elevation: 1,
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    cardMainContent: {
+        flex: 1,
+        paddingRight: 16,
+    },
+    cardExpiryColumn: {
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        minWidth: 90,
     },
     foodName: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '700',
+        color: "#1e293b",
+        marginBottom: 4,
     },
     foodDetails: {
         color: '#666',
         marginTop: 5,
-    
+        fontSize: 13,
     },
     expiryLabel: {
-        fontSize: 12,
-        color: '#777'
+        fontSize: 11,
+        color: '#777',
+        textTransform: 'uppercase',
+        fontWeight: '600',
+        letterSpacing: 0.5,
     },
     expiryDate: {
-        marginTop: 3,
-        fontWeight: 'bold',
+        fontSize: 13,
+        marginTop: 2,
+        fontWeight: '600',
+        color: '#334155',
     },
     emptyText: {
         textAlign: 'center',

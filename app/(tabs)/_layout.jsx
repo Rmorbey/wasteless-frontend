@@ -22,7 +22,7 @@ export default function TabLayout() {
         try {
             const response = await fetch ('http://4.225.221.72/pantry', {
                 method: 'GET',
-                header: {
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 }
@@ -30,9 +30,14 @@ export default function TabLayout() {
             const data = await response.json()
             console.log('outside response.ok pantry fetch: ', data)
 
-            if (response.ok) {
+            if (response.ok && Array.isArray(data)) {
                 console.log('inside reponse.ok fetch pantry data: ', data)
-                setPantryItems(data)
+                const sortedItems = data.sort((a, b) => {
+                    if (!a.expiry_date) return 1
+                    if (!b.expiry_date) return -1
+                    return new Date(a.expiry_date) - new Date(b.expiry_date)
+                })
+                setPantryItems(sortedItems)
             }
         } catch (error) {
             console.error("Database loading error:", error.message)
