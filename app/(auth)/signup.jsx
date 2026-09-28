@@ -15,20 +15,22 @@ export default function SignUpScreen() {
     const router = useRouter();
     const { register } = useAuth();
 
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     const handleSignUp = async () => {
-        if (!email || !password) {
+        if (!username|| !password) {
             alert("Please fill out all fields");
             return;
         }
 
         try {
-            await register(email, password);
+            await register(username, password);
 
             router.replace("/(auth)/login");
-        } catch (error) {}
+        } catch (error) {
+            console.error("Registration error:", error)
+        }
     };
 
     return (
@@ -51,8 +53,8 @@ export default function SignUpScreen() {
                     placeholder="example@email.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
+                    value={username}
+                    onChangeText={setUsername}
                     placeholderTextColor="#999"
                 />
 
@@ -62,6 +64,7 @@ export default function SignUpScreen() {
                     placeholder="••••••••"
                     secureTextEntry={true}
                     autoCapitalize="none"
+                    value={password}
                     onChangeText={setPassword}
                     placeholderTextColor="#999"
                 />

@@ -15,16 +15,16 @@ export default function LoginScreen() {
     const router = useRouter();
     const { login } = useAuth();
 
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     const handleLogin = async () => {
-        if (!email || !password) {
+        if (!username || !password) {
             alert("Please fill out all fields");
             return;
         }
 
-        await login(email, password);
+        await login(username, password);
     };
 
     return (
@@ -47,8 +47,8 @@ export default function LoginScreen() {
                     placeholder="example@email.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
+                    value={username}
+                    onChangeText={setUsername}
                     placeholderTextColor="#999"
                 />
 
