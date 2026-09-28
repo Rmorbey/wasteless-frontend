@@ -40,7 +40,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "test:pantry": "jest __tests__/screens/pantryScreen.test.jsx",
+    "test:api": "jest __tests__/services/foodBankApi.test.jsx"
   },
   "jest": {
     "preset": "jest-expo"
