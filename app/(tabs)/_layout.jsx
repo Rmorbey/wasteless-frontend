@@ -13,13 +13,14 @@ export const usePantry = () => useContext(PantryContext)
 
 export default function TabLayout() {
     const { token } = useAuth()
+
     const [ pantryItems, setPantryItems ] = useState([])
 
     const fetchPantryFromBackend = async () => {
         if (!token) return
 
         try {
-            const response = await fetch ('http://localhost/pantry', {
+            const response = await fetch ('http://4.225.221.72/pantry', {
                 method: 'GET',
                 header: {
                     "Content-Type": "application/json",
@@ -27,8 +28,10 @@ export default function TabLayout() {
                 }
             })
             const data = await response.json()
+            console.log('outside response.ok pantry fetch: ', data)
 
             if (response.ok) {
+                console.log('inside reponse.ok fetch pantry data: ', data)
                 setPantryItems(data)
             }
         } catch (error) {

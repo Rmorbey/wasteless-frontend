@@ -6,7 +6,7 @@ import { useAuth } from "../_layout";
 
 export default function PantryScreen() {
     const { pantryItems, fetchPantryFromBackend } = usePantry()
-    const { token } = useAuth()
+    const { token, userId } = useAuth()
 
     const [manualFormVisible, setManualFormVisible] = useState(false)
     const [modalVisible, setModalVisible] = useState(false)
@@ -25,7 +25,7 @@ export default function PantryScreen() {
         }
 
         try {
-            const response = await fetch(`http://localhost/pantry`, {
+            const response = await fetch(`http://4.225.221.72/pantry`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -34,6 +34,7 @@ export default function PantryScreen() {
                 body: JSON.stringify({
                     name: foodName,
                     quantity: parseInt(quantity) || 1,
+                    user_id: userId,
                     expiry_date: expiry,
                 })
             })
@@ -43,7 +44,8 @@ export default function PantryScreen() {
             if(!response.ok) {
                 throw new Error(data.error || "Failed to add item to pantry.")
             }
-
+            console.log('user id: ', userId)
+            
             await fetchPantryFromBackend()
 
             setFoodName('')
@@ -68,7 +70,7 @@ export default function PantryScreen() {
 
             const hostedImageUrl = 'https://i.ibb.co/LD3WskXw/PXL-20260925-141424333.jpg'
 
-            const response = await fetch(`http://localhost/scan-receipt`, {
+            const response = await fetch(`http://4.225.221.72/scan-receipt`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': "application/json",
@@ -103,7 +105,7 @@ export default function PantryScreen() {
                 </View>
                 <View>
                     <Text style={styles.expiryLabel}>Expires:</Text>
-                    <Text style={styles.expiryDate}>{item.expiry}</Text>
+                    <Text style={styles.expiryDate}>{item.expiry_date}</Text>
                 </View>
             </View>
         )
