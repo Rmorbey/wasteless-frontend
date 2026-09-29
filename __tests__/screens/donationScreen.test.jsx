@@ -99,8 +99,6 @@ describe("DonationsScreen", () => {
             }
         ]
         getNearbyDonationLocations.mockResolvedValue(mockLocations)
-        getNeedsStatus.mockReturnValue("available")
-        findDonationMatches.mockReturnValue([])
         await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
         await fireEvent.press(screen.getByText("Search"))
         expect(await screen.findByText("• Milk")).toBeTruthy()
@@ -120,7 +118,6 @@ describe("DonationsScreen", () => {
             }
         ]
         getNearbyDonationLocations.mockResolvedValue(mockLocations)
-        getNeedsStatus.mockReturnValue("available")
         findDonationMatches.mockReturnValue([{ id: "1", name: "Milk", }])
         await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
         await fireEvent.press(screen.getByText("Search"))
