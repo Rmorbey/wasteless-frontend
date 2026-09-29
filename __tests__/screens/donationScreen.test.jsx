@@ -124,4 +124,47 @@ describe("DonationsScreen", () => {
         expect(await screen.findByText(/You can donate/)).toBeTruthy()
         expect(screen.getByText("+ Milk")).toBeTruthy()
     })
+
+    it("shows the unavailable message when needs are unknown", async () => {
+        const mockLocations = [
+            {
+                id: "1",
+                name: "Local Food Bank",
+                lat_lng: "51.5,-0.1",
+                needs: {
+                    needs: "unknown",
+                },
+                fallbackUrl: "https://example.com"
+            },
+        ]
+        getNearbyDonationLocations.mockResolvedValue(mockLocations)
+        getNeedsStatus.mockReturnValue("unknown")
+        await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
+        await fireEvent.press(screen.getByText("Search"))
+        expect(await screen.findByText("Current donation needs aren't available.")).toBeTruthy()
+        expect(screen.getByText("View latest information")).toBeTruthy()
+    })
+
+    it("opens the food bank fallback link", async () => {
+        const mockLocations = [
+            {
+                id: "1",
+                name: "Local Food Bank",
+                lat_lng: "51.5,-0.1",
+                needs: {
+                    needs: "unknown",
+                },
+                fallbackUrl: "https://example.com"
+            },
+        ]
+        getNearbyDonationLocations.mockResolvedValue(mockLocations)
+        getNeedsStatus.mockReturnValue("unknown")
+        jest.spyOn(Linking, "canOpenURL").mockResolvedValue(true)
+        jest.spyOn(Linking, "openURL").mockResolvedValue()
+        await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
+        await fireEvent.press(screen.getByText("Search"))
+        await fireEvent.press(screen.getByText("View latest information"))
+        expect(Linking.canOpenURL).toHaveBeenCalledWith("https://example.com")
+        expect(Linking.openURL).toHaveBeenCalledWith("https://example.com")
+    })
 })
