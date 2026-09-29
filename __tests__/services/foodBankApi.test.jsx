@@ -50,4 +50,100 @@ describe("getNearbyDonationLocations", () => {
         expect(result[0].name).toBe("location 1")
         expect(result[4].name).toBe("location 5")
     })
+
+    it("returns a location unchanged when needs information is available", async () => {
+        const mockLocation = {
+            name: "Food Bank",
+            needs: {
+                needs: "Pasta, rice and beans",
+            },
+            foodbank: {
+                urls: {
+                    self: "https://example.com/foodbank",
+                },
+            },
+        }
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [mockLocation],
+        })
+        const result = await getNearbyDonationLocations("SE7 7HR")
+        expect(result[0]).toEqual(mockLocation)
+        expect(global.fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("fetches food bank details when needs are unknown", async () => {
+        const mockLocation = {
+            name: "Food Bank",
+            needs: {
+                needs: "unknown",
+            },
+            foodbank: {
+                urls: {
+                    self: "https://example.com/foodbank-api",
+                    html: "https://example.com/foodbank",
+                },
+            },
+        }
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [mockLocation],
+        })
+        .mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({
+                urls: {
+                    shopping_list: "https://example.com/shopping-list",
+                },
+            }),
+        })
+        const result = await getNearbyDonationLocations("SE7 7HR")
+        expect(global.fetch).toHaveBeenCalledTimes(2)
+        expect(global.fetch).toHaveBeenNthCalledWith(2, "https://example.com/foodbank-api")
+        expect(result[0]).toEqual({
+            ...mockLocation,
+            fallbackUrl: "https://example.com/shopping-list",
+        })
+    })
+    it("returns the original location when the food bank details request fails", async () => {
+        const mockLocation = {
+            name: "Food Bank",
+            needs: {
+                needs: "unknown",
+            },
+            foodbank: {
+                urls: {
+                    self: "https://example.com/foodbank-api",
+                },
+            },
+        }
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [mockLocation],
+        })
+        .mockResolvedValueOnce({
+            ok: false,
+        })
+        const result = await getNearbyDonationLocations("SE7 7HR")
+        expect(result[0]).toEqual(mockLocation)
+    })
+
+    it("returns the original location when no foodbank self url exists", async () => {
+        const mockLocation = {
+            name: "Food Bank",
+            needs: {
+                needs: "unknown",
+            },
+            foodbank: {
+                urls: {},
+            },
+        }
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [mockLocation],
+        })
+        const result = await getNearbyDonationLocations("SE7 7HR")
+        expect(result[0]).toEqual(mockLocation)
+        expect(global.fetch).toHaveBeenCalledTimes(1)
+    })
 })
