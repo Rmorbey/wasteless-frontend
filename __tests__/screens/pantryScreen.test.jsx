@@ -86,13 +86,62 @@ describe("PantryScreen", () => {
     })
 
     it("shows an alert when required information is missing", async () => {
-        const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {})
         await fireEvent.press(screen.getByText("+ Add Food"))
         await fireEvent.press(screen.getByText("Add Manually."))
         await fireEvent.press(screen.getByText("Add to pantry"))
-        expect(alertSpy).toHaveBeenCalledWith(
+        expect(Alert.alert).toHaveBeenCalledWith(
             "Missing information.",
             "Please enter a food name and an expiry date."
         )
+        expect(global.fetch).not.toHaveBeenCalled()
+    })
+
+    it("shows an error alert when adding food fails", async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            json: async () => ({
+                error: "Failed to add item",
+            }),
+        })
+        await fireEvent.press(screen.getByText("+ Add Food"))
+        await fireEvent.press(screen.getByText("Add Manually."))
+        await fireEvent.changeText(screen.getByPlaceholderText("food name"), "Apples")
+        await fireEvent.press(screen.getByText("Add to pantry"))
+        expect(Alert.alert).toHaveBeenCalledWith("Error", "Could not add item to server.")
+        expect(mockFetchPantryFromBackend).not.toHaveBeenCalled()
+    })
+
+    it("scans a receipt and refreshes the pantry", async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                message: "Receipt processed",
+            }),
+        })
+        await fireEvent.press(screen.getByText("+ Add Food"))
+        await fireEvent.press(screen.getByText("Scan Receipt."))
+        expect(global.fetch).toHaveBeenCalledWith("http://4.225.221.72/scan-receipt",
+            expect.objectContaining({
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer mock-token",
+                },
+            })
+        )
+        expect(mockFetchPantryFromBackend).toHaveBeenCalled()
+        expect(Alert.alert).toHaveBeenCalledWith("Success", "Receipt processed and items added to your pantry")
+    })
+    
+    it("shows an error alert when receipt scanning fails", async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            json: async () => ({
+                error: "Scan failed",
+            }),
+        })
+        await fireEvent.press(screen.getByText("+ Add Food"))
+        await fireEvent.press(screen.getByText("Scan Receipt."))
+        expect(Alert.alert).toHaveBeenCalledWith("Scanning Error", "Failed to extract items. Ensure image is clear.")
     })
 })
