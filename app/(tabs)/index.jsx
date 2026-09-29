@@ -1,8 +1,11 @@
 import { Text, View, TextInput, FlatList, Pressable, Modal, StyleSheet, Alert } from "react-native";
 import { useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, Platform } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker'
 import { usePantry } from "./_layout";
 import { useAuth } from "../_layout";
+import { Ionicons } from "@expo/vector-icons";
+import { pantryStyles as styles } from "../../constants/PantryStyles";
 
 export default function PantryScreen() {
     const { pantryItems, fetchPantryFromBackend } = usePantry()
@@ -12,8 +15,9 @@ export default function PantryScreen() {
     const [modalVisible, setModalVisible] = useState(false)
     const [foodName, setFoodName] = useState('')
     const [quantity, setQuanity] = useState('')
-    const [expiry, setExpiry] = useState('')
     const [scanning, setScanning] = useState(false)
+    const [date, setDate] = useState(new Date())
+    const [showDatePicker, setShowDatePicker] = useState(false)
 
     async function handleAddFood(){
         if(!foodName || !expiry){
@@ -35,7 +39,7 @@ export default function PantryScreen() {
                     name: foodName,
                     quantity: parseInt(quantity) || 1,
                     user_id: userId,
-                    expiry_date: expiry,
+                    expiry_date: date,
                 })
             })
 
@@ -50,7 +54,7 @@ export default function PantryScreen() {
 
             setFoodName('')
             setQuanity('')
-            setExpiry('')
+            setDate(new Date())
             setManualFormVisible(false)
             setModalVisible(false)
 
@@ -97,15 +101,16 @@ export default function PantryScreen() {
     }
 
     function renderPantryItem({ item }){
+        const formattedDate = item.expiry_date ? item.expiry_date.split('T')[0] : ''
         return (
             <View style={styles.foodCard}>
-                <View>
-                    <Text style={styles.foodName}>{item.name}</Text>
+                <View style={styles.cardMainContent}>
+                    <Text style={styles.foodName} numberOfLines={2} ellipsizeMode="tail">{item.name}</Text>
                     <Text style={styles.foodDetails}>Quantity: {item.quantity}</Text>
                 </View>
-                <View>
+                <View style={styles.cardExpiryColumn}>
                     <Text style={styles.expiryLabel}>Expires:</Text>
-                    <Text style={styles.expiryDate}>{item.expiry_date}</Text>
+                    <Text style={styles.expiryDate}>{formattedDate}</Text>
                 </View>
             </View>
         )
@@ -190,12 +195,30 @@ export default function PantryScreen() {
                                     value={quantity} 
                                     onChangeText={setQuanity} 
                                 />
-                                <TextInput
-                                    style={styles.input} 
-                                    placeholder="expiry date(YYYY-MM-DD)" 
-                                    value={expiry} 
-                                    onChangeText={setExpiry}
-                                />
+                                <Pressable 
+                                    style={styles.datePickerSelectorButton} 
+                                    onPress={() => setShowDatePicker(true)}
+                                >
+                                    <Text style={styles.datePickerSelectorText}>
+                                        {date.toISOString().split('T')[0]}
+                                    </Text>
+                                    <Ionicons name="calendar-outline" size={18} color='#666'/>
+                                </Pressable>
+
+                                {showDatePicker && (
+                                    <DateTimePicker
+                                        value={date}
+                                        mode="date"
+                                        display={Platform.OS == 'ios' ? 'inline' : 'default'}
+                                        minimumDate={new Date()}
+                                        onValueChange={(event, selectedDate) => {
+                                            setShowDatePicker(false)
+                                            if (selectedDate) {
+                                                setDate(selectedDate)
+                                            }
+                                        }}
+                                    />
+                                )}
                                 <Pressable style={styles.saveButton} onPress={handleAddFood}>
                                     <Text style={styles.saveButtonText}>
                                         Add to pantry
@@ -216,139 +239,3 @@ export default function PantryScreen() {
 
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f7f7f7',
-        padding: 20,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-    },
-    subtitle: {
-        color: '#777',
-        marginTop: 4,
-    },
-    addButton: {
-        backgroundColor: '#2f855a',
-        paddingVertical: 12,
-        paddingHorizontal: 18,
-        borderRadius: 10,
-    },
-    addButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-
-    },
-    foodList: {
-        gap: 12,
-    },
-    foodCard: {
-        backgroundColor: 'white',
-        padding: 16,
-        borderRadius: 12,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    foodName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    foodDetails: {
-        color: '#666',
-        marginTop: 5,
-    
-    },
-    expiryLabel: {
-        fontSize: 12,
-        color: '#777'
-    },
-    expiryDate: {
-        marginTop: 3,
-        fontWeight: 'bold',
-    },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 50,
-        color: '#777',
-    },
-    modalBackground: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: 'rgba(0,0,0,0.4)',
-    },
-    modalContainer: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
-        padding: 25,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    optionButton: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        padding: 18,
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    optionTitle: {
-        fontSize: 17,
-        fontWeight: 'bold',
-    },
-    optionDescription: {
-        color: '#777',
-        marginTop: 5,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        padding: 14,
-        marginBottom: 12,
-    },
-    saveButton: {
-        backgroundColor: '#2f855a',
-        padding: 16,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 5,
-    },
-    saveButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-    },
-    cancelButton: {
-        padding: 15,
-        alignItems: 'center',
-    },
-    cancelText: {
-        color: '#666'
-    },
-    loadingOverlay: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.85)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 999,
-    },
-    loadingText: {
-        marginTop: 14,
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-    },
-})
