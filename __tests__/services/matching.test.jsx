@@ -25,3 +25,42 @@ describe("getNeedsStatus", () => {
         expect(getNeedsStatus("  NOTHING  ")).toBe("nothing")
     })
 })
+
+describe("findDonationMatches", () => {
+    const pantryItems = [
+        { id: "1", name: "Milk" },
+        { id: "2", name: "Pasta" },
+        { id: "3", name: "Tinned Beans" },
+        { id: "4", name: "Rice" },
+    ]
+
+    it("returns matching pantry items", () => {
+        const needsString = "Pasta\nRice"
+        const result = findDonationMatches(pantryItems, needsString)
+        expect(result).toEqual([
+            { id: "2", name: "Pasta" },
+            { id: "4", name: "Rice" },
+        ])
+    })
+
+    it("returns an empty array when needs are unknown, facebook or nothing", () => {
+        expect(findDonationMatches(pantryItems, "unknown")).toEqual([])
+        expect(findDonationMatches(pantryItems, "facbook")).toEqual([])
+        expect(findDonationMatches(pantryItems, "nothing")).toEqual([])
+    })
+
+    it("reurn an empty array when there are no matches", () => {
+        const result = findDonationMatches(pantryItems, "Cereal\nTea")
+        expect(result).toEqual([])
+    })
+
+    it("matches items after removing quantities and regardless of capitalisation", () => {
+        const result = findDonationMatches(pantryItems, "500g PASTA")
+        expect(result).toEqual([{ id: "2", name: "Pasta" }])
+    })
+
+    it("matches when one item name contains the other", () => {
+        const result = findDonationMatches(pantryItems, "Beans")
+        expect(result).toEqual([{ id: "3", name: "Tinned Beans" }])
+    })
+})
