@@ -86,4 +86,45 @@ describe("DonationsScreen", () => {
         await fireEvent.press(screen.getByText("Search"))
         expect(await screen.findByText("Unable to find nearby donation locations")).toBeTruthy()
     })
+
+    it("shows available donation needs", async () => {
+        const mockLocations = [
+            {
+                id: "1",
+                name: "Local Food Bank",
+                lat_lng: "51.5,-0.1",
+                needs: {
+                    needs: "Milk\nBread",
+                }
+            }
+        ]
+        getNearbyDonationLocations.mockResolvedValue(mockLocations)
+        getNeedsStatus.mockReturnValue("available")
+        findDonationMatches.mockReturnValue([])
+        await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
+        await fireEvent.press(screen.getByText("Search"))
+        expect(await screen.findByText("• Milk")).toBeTruthy()
+        expect(screen.getByText("• Bread")).toBeTruthy()
+        expect(screen.getByText("No pantry matches found")).toBeTruthy()
+    })
+
+    it("shows pantry donation matches", async () => {
+        const mockLocations = [
+            {
+                id: "1",
+                name: "Local Food Bank",
+                lat_lng: "51.5,-0.1",
+                needs: {
+                    needs: "Milk\nBread",
+                }
+            }
+        ]
+        getNearbyDonationLocations.mockResolvedValue(mockLocations)
+        getNeedsStatus.mockReturnValue("available")
+        findDonationMatches.mockReturnValue([{ id: "1", name: "Milk", }])
+        await fireEvent.changeText(screen.getByPlaceholderText("Enter postcode or location"), "SE7 7HR")
+        await fireEvent.press(screen.getByText("Search"))
+        expect(await screen.findByText(/You can donate/)).toBeTruthy()
+        expect(screen.getByText("+ Milk")).toBeTruthy()
+    })
 })
