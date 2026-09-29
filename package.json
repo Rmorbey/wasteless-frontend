@@ -44,7 +44,8 @@
     "coverage": "jest --coverage",
     "test:pantry": "jest __tests__/screens/pantryScreen.test.jsx",
     "test:api": "jest __tests__/services/foodBankApi.test.jsx",
-    "test:match": "jest __tests__/services/matching.test.jsx"
+    "test:match": "jest __tests__/services/matching.test.jsx",
+    "test:donation": "jest __tests__/screens/donationScreen.test.jsx"
   },
   "jest": {
     "preset": "jest-expo"
