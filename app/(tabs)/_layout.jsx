@@ -16,11 +16,14 @@ export default function TabLayout() {
 
     const [ pantryItems, setPantryItems ] = useState([])
 
+    const API_URL = "http://4.225.221.72";
+    const local_URL = 'http://localhost'
+
     const fetchPantryFromBackend = async () => {
         if (!token) return
 
         try {
-            const response = await fetch ('http://4.225.221.72/pantry', {
+            const response = await fetch (`${local_URL}/pantry`, {
                 method: 'GET',
                 headers: {
                     "Content-Type": "application/json",

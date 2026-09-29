@@ -1,230 +1,159 @@
-import { Text, View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { Text, View, ScrollView, Pressable } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
-import { TWPallet } from "../../constants/TWPallet";
+import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { dashboardStyles as styles } from "../../constants/DashboardStyles";
+import { useAuth } from '../_layout'
 
 export default function DashboardScreen() {
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-
+    const { token } = useAuth()
     const [activeFilter, setActiveFilter] = useState("all");
 
-    const bgColors = [TWPallet.slate[100], "#ffffff", TWPallet.slate[100]];
+    const [rawData, setRawData] = useState(null)
+    const [loading, setLoading] = useState(false)
 
-    const wastedData = [
-        { value: 12, label: "Wk 1" },
-        { value: 8, label: "Wk 2" },
-        { value: 4, label: "Wk 3" },
-        { value: 2, label: "Wk 4" },
-    ];
-    const usedData = [
-        { value: 25, label: "Wk 1" },
-        { value: 30, label: "Wk 2" },
-        { value: 28, label: "Wk 3" },
-        { value: 35, label: "Wk 4" },
-    ];
-    const donatedData = [
-        { value: 5, label: "Wk 1" },
-        { value: 14, label: "Wk 2" },
-        { value: 22, label: "Wk 3" },
-        { value: 18, label: "Wk 4" },
-    ];
+    const [ wastedData, setWastedData] = useState([{ value: 0, label: "" }])
+    const [ usedData, setUsedData] = useState([{ value: 0, label: "" }])
+    const [ donatedData, setDonatedData] = useState([{ value: 0, label: "" }])
 
-    const getMonthName = (month) => {
-        const months = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ];
-        return months[month];
-    };
+    const bgColors = ["#f8fafc", "#ffffff", "#f8fafc"];
 
-    const navigateMonth = (direction) => {
-        let newMonth = currentMonth + direction;
-        let newYear = currentYear;
+    const API_URL = "http://4.225.221.72";
+    const local_URL = 'http://localhost'
 
-        if (newMonth > 11) {
-            newMonth = 0;
-            newYear++;
-        } else if (newMonth < 0) {
-            newMonth = 11;
-            newYear--;
+    const formatMonthLabel = (yearMonthStr) => {
+        const [_, monthStr] = yearMonthStr.split('-')
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        const index = parseInt(monthStr, 10) - 1
+        return months[index] || monthStr
+    }
+
+    const fetchAnalytics = async () => {
+        try {
+            setLoading(true)
+            const response = await fetch(`${local_URL}/dashboard`, {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+            const data = await response.json()
+
+            if (response.ok){
+                setRawData(data)
+                processChartData(data)
+            }
+        } catch (error) {
+            console.error("Fetching error to dashboard route.", error.message)
+        } finally {
+            setLoading(false)
         }
+    }
 
-        setCurrentMonth(newMonth);
-        setCurrentYear(newYear);
-    };
+    const processChartData = (data) => {
+        if (!data || !data.monthly_analysis) return
+
+        const monthsTimeLine = data.monthly_analysis
+
+        const wastedMetrics = monthsTimeLine.map(m => ({
+            value: m.wasted,
+            label: formatMonthLabel(m.year_month)
+        }))
+
+        const usedMetrics = monthsTimeLine.map(m => ({
+            value: m.used,
+            label: formatMonthLabel(m.year_month)
+        }))
+
+        const donatedMetrics = monthsTimeLine.map(m => ({
+            value: m.donated,
+            label: formatMonthLabel(m.year_month)
+        }))
+
+        setWastedData(wastedMetrics)
+        setUsedData(usedMetrics)
+        setDonatedData(donatedMetrics)
+    }
+
+    useEffect(() => {
+        fetchAnalytics()
+    }, [token])
+
 
     const getActiveDataSet = () => {
         const showWasted = activeFilter === "all" || activeFilter === "wasted";
         const showUsed = activeFilter === "all" || activeFilter === "used";
-        const showDonated =
-            activeFilter === "all" || activeFilter === "donated";
+        const showDonated = activeFilter === "all" || activeFilter === "donated";
 
         return [
             {
                 data: wastedData,
-                color: showWasted ? TWPallet.red[500] : "transparent",
-                dataPointsColor: showWasted ? TWPallet.red[500] : "transparent",
+                color: showWasted ? "#ef4444" : "transparent",
+                dataPointsColor: showWasted ? "#ef4444" : "transparent",
             },
             {
                 data: usedData,
-                color: showUsed ? TWPallet.lime[500] : "transparent",
-                dataPointsColor: showUsed ? TWPallet.lime[500] : "transparent",
+                color: showUsed ? "#10b981" : "transparent",
+                dataPointsColor: showUsed ? "#10b981" : "transparent",
             },
             {
                 data: donatedData,
-                color: showDonated ? TWPallet.blue[500] : "transparent",
+                color: showDonated ? "#3b82f6" : "transparent",
                 dataPointsColor: showDonated
-                    ? TWPallet.blue[500]
+                    ? "#3b82f6"
                     : "transparent",
             },
         ];
     };
 
+    const totalDonated = rawData ? rawData.total_donated : 0
+    const totalUsed = rawData ? rawData.total_used : 0
+    const totalWasted = rawData ? rawData.total_wasted : 0
+
+    const donatedPercent = rawData ? parseFloat(rawData.donated_percentage) : 0
+    const usedPercent = rawData ? parseFloat(rawData.used_percentage) : 0
+    const wastedPercent = rawData ? parseFloat(rawData.wasted_percentage) : 0
+
+    const efficiencyPercentage = Math.round(donatedPercent + usedPercent)
+    const totalWastePercentage = Math.round(wastedPercent)
+
+    const estimatedMeals = Math.round((totalDonated * 2) / 3)
+
     return (
         <LinearGradient style={{ flex: 1 }} colors={bgColors}>
-            <ScrollView
-                contentInsetAdjustmentBehavior="automatic"
-                contentContainerStyle={{ paddingBottom: 32 }}
-            >
+            <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ paddingBottom: 32 }}>
                 <View style={styles.headerRow}>
-                    <Pressable
-                        onPress={() => navigateMonth(-1)}
-                        style={styles.navButton}
-                        hitSlop={20}
-                    >
-                        <Ionicons
-                            name={"chevron-back"}
-                            size={18}
-                            color={TWPallet.slate[600]}
-                        />
-                    </Pressable>
-
-                    <Text style={styles.headerTitle}>
-                        {getMonthName(currentMonth)} {currentYear}
-                    </Text>
-
-                    <Pressable
-                        onPress={() => navigateMonth(1)}
-                        style={styles.navButton}
-                        hitSlop={20}
-                    >
-                        <Ionicons
-                            name={"chevron-forward"}
-                            size={18}
-                            color={TWPallet.slate[600]}
-                        />
-                    </Pressable>
+                    <View />
+                        <Text style={styles.headerTitle}>Overview Analytics (2026)</Text>
+                    <View />
                 </View>
 
-                <View
-                    style={[
-                        styles.card,
-                        { marginHorizontal: 16, marginBottom: 16 },
-                    ]}
-                >
+                <View style={[ styles.card, { marginHorizontal: 16, marginBottom: 16 }]}>
                     <Text style={styles.cardTitle}>Food Inventory Trends</Text>
 
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            gap: 16,
-                            marginBottom: 16,
-                        }}
-                    >
-                        {(activeFilter === "all" ||
-                            activeFilter === "wasted") && (
-                            <View
-                                style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    gap: 6,
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: 5,
-                                        backgroundColor: TWPallet.red[500],
-                                    }}
-                                />
-                                <Text
-                                    style={{
-                                        fontSize: 12,
-                                        color: TWPallet.slate[600],
-                                        fontWeight: "600",
-                                    }}
-                                >
+                    <View style={{ flexDirection: "row", gap: 16, marginBottom: 16 }}>
+                        {(activeFilter === "all" || activeFilter === "wasted") && (
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={{ width: 10,height: 10, borderRadius: 5, backgroundColor: "#ef4444", }}/>
+                                <Text style={{ fontSize: 12, color: "#475569", fontWeight: "600" }}>
                                     Wasted
                                 </Text>
                             </View>
                         )}
-                        {(activeFilter === "all" ||
-                            activeFilter === "used") && (
-                            <View
-                                style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    gap: 6,
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: 5,
-                                        backgroundColor: TWPallet.lime[500],
-                                    }}
-                                />
-                                <Text
-                                    style={{
-                                        fontSize: 12,
-                                        color: TWPallet.slate[600],
-                                        fontWeight: "600",
-                                    }}
-                                >
+                        {(activeFilter === "all" || activeFilter === "used") && (
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#10b981" }}/>
+                                <Text style={{ fontSize: 12, color: "#475569", fontWeight: "600" }}>
                                     Used
                                 </Text>
                             </View>
                         )}
-                        {(activeFilter === "all" ||
-                            activeFilter === "donated") && (
-                            <View
-                                style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    gap: 6,
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: 5,
-                                        backgroundColor: TWPallet.blue[500],
-                                    }}
-                                />
-                                <Text
-                                    style={{
-                                        fontSize: 12,
-                                        color: TWPallet.slate[600],
-                                        fontWeight: "600",
-                                    }}
-                                >
+                        {(activeFilter === "all" || activeFilter === "donated") && (
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#3b82f6" }}/>
+                                <Text style={{ fontSize: 12, color: "#475569", fontWeight: "600" }}>
                                     Donated
                                 </Text>
                             </View>
@@ -239,13 +168,13 @@ export default function DashboardScreen() {
                         noOfSections={4}
                         yAxisThickness={0}
                         xAxisThickness={1}
-                        xAxisColor={TWPallet.slate[200]}
+                        xAxisColor={"#e2e8f0"}
                         xAxisLabelTextStyle={{
-                            color: TWPallet.slate[400],
+                            color: "#94a3b8",
                             fontSize: 11,
                         }}
                         yAxisTextStyle={{
-                            color: TWPallet.slate[400],
+                            color: "#94a3b8",
                             fontSize: 11,
                         }}
                         height={160}
@@ -253,81 +182,27 @@ export default function DashboardScreen() {
                     />
 
                     <View style={styles.filterButtonGroup}>
-                        <Pressable
-                            onPress={() => setActiveFilter("all")}
-                            style={[
-                                styles.filterButton,
-                                activeFilter === "all" && {
-                                    backgroundColor: TWPallet.yellow[500],
-                                },
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterButtonText,
-                                    activeFilter === "all" && { color: "#fff" },
-                                ]}
-                            >
+                        <Pressable onPress={() => setActiveFilter("all")} 
+                        style={[ styles.filterButton, activeFilter === "all" && { backgroundColor: "#eab308" }]}>
+                            <Text style={[ styles.filterButtonText, activeFilter === "all" && { color: "#fff" } ]}>
                                 All
                             </Text>
                         </Pressable>
-                        <Pressable
-                            onPress={() => setActiveFilter("wasted")}
-                            style={[
-                                styles.filterButton,
-                                activeFilter === "wasted" && {
-                                    backgroundColor: TWPallet.red[500],
-                                },
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterButtonText,
-                                    activeFilter === "wasted" && {
-                                        color: "#fff",
-                                    },
-                                ]}
-                            >
+                        <Pressable onPress={() => setActiveFilter("wasted")}
+                            style={[ styles.filterButton, activeFilter === "wasted" && { backgroundColor: "#ef4444" }]}>
+                            <Text style={[styles.filterButtonText, activeFilter === "wasted" && { color: "#fff" }]}>
                                 Wasted
                             </Text>
                         </Pressable>
-                        <Pressable
-                            onPress={() => setActiveFilter("used")}
-                            style={[
-                                styles.filterButton,
-                                activeFilter === "used" && {
-                                    backgroundColor: TWPallet.lime[500],
-                                },
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterButtonText,
-                                    activeFilter === "used" && {
-                                        color: "#fff",
-                                    },
-                                ]}
-                            >
+                        <Pressable onPress={() => setActiveFilter("used")}
+                            style={[ styles.filterButton, activeFilter === "used" && { backgroundColor: "#10b981" }]}>
+                            <Text style={[styles.filterButtonText, activeFilter === "used" && { color: "#fff" }]}>
                                 Used
                             </Text>
                         </Pressable>
-                        <Pressable
-                            onPress={() => setActiveFilter("donated")}
-                            style={[
-                                styles.filterButton,
-                                activeFilter === "donated" && {
-                                    backgroundColor: TWPallet.blue[500],
-                                },
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterButtonText,
-                                    activeFilter === "donated" && {
-                                        color: "#fff",
-                                    },
-                                ]}
-                            >
+                        <Pressable onPress={() => setActiveFilter("donated")}
+                            style={[ styles.filterButton, activeFilter === "donated" && { backgroundColor: "#3b82f6" }]}>
+                            <Text style={[ styles.filterButtonText, activeFilter === "donated" && { color: "#fff" }]}>
                                 Donated
                             </Text>
                         </Pressable>
@@ -335,38 +210,22 @@ export default function DashboardScreen() {
                 </View>
 
                 <View style={styles.statsContainer}>
-                    <View
-                        style={[
-                            styles.card,
-                            styles.fullCard,
-                            { borderColor: TWPallet.pink[200], borderWidth: 1 },
-                        ]}
-                    >
+                    <View style={[ styles.card, styles.fullCard, { borderColor: "#fbcfe8", borderWidth: 1 }]}>
                         <LinearGradient
-                            colors={[TWPallet.pink[50], "#ffffff"]}
+                            colors={["#fdf2f8", "#ffffff"]}
                             style={styles.cardGradientWrapper}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                         >
-                            <View
-                                style={[
-                                    styles.iconCircle,
-                                    { backgroundColor: TWPallet.pink[100] },
-                                ]}
-                            >
-                                <Ionicons
-                                    name="heart"
-                                    size={24}
-                                    color={TWPallet.pink[500]}
-                                />
+                            <View style={[ styles.iconCircle, { backgroundColor: "#fce7f3" }]}>
+                                <Ionicons name="heart" size={24} color={"#ec4899"}/>
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.statNumber}>
-                                    Hardcoded: 24 meals
+                                    {totalDonated} Items Donated ({donatedPercent.toFixed(1)}%)
                                 </Text>
                                 <Text style={styles.statLabel}>
-                                    Hardcoded: Shared with nearby families in
-                                    need
+                                    Provided approx. {estimatedMeals} meals to local families in need
                                 </Text>
                             </View>
                         </LinearGradient>
@@ -374,50 +233,23 @@ export default function DashboardScreen() {
 
                     <View style={styles.statsGrid}>
                         <View style={[styles.card, { flex: 1 }]}>
-                            <Ionicons
-                                name="pie-chart"
-                                size={20}
-                                color={TWPallet.lime[600]}
-                            />
+                            <Ionicons name="pie-chart" size={20} color={"#65a30d"}/>
                             <Text style={styles.gridNumber}>
-                                Hardcoded: 82%
+                                {efficiencyPercentage}%
                             </Text>
                             <Text style={styles.gridLabel}>
-                                Hardcoded: Pantry Efficiency
+                                Pantry Efficiency ({totalDonated + totalUsed} items saved/donated)
                             </Text>
                         </View>
                         <View style={[styles.card, { flex: 1 }]}>
-                            <Ionicons
-                                name="trash-outline"
-                                size={20}
-                                color={TWPallet.red[500]}
-                            />
+                            <Ionicons name="trash-outline" size={20} color={"#ef4444"}/>
                             <Text style={styles.gridNumber}>
-                                Hardcoded: 1.4kg
+                                {totalWastePercentage}%
                             </Text>
                             <Text style={styles.gridLabel}>
-                                Hardcoded: Total Food Waste
+                                Total Food Waste ({totalWasted} Items)
                             </Text>
                         </View>
-                    </View>
-
-                    <View style={styles.card}>
-                        <Text style={styles.sectionTitle}>
-                            Hardcoded: Waste Insights
-                        </Text>
-                        <Text style={styles.bodyText}>
-                            Hardcoded: Your primary wasted category this month
-                            was{" "}
-                            <Text
-                                style={{
-                                    fontWeight: "700",
-                                    color: TWPallet.red[600],
-                                }}
-                            >
-                                Fresh Produce
-                            </Text>
-                            , accounting for 70% of discarded items.
-                        </Text>
                     </View>
                 </View>
             </ScrollView>

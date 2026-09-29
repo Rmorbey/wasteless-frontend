@@ -18,9 +18,14 @@ export default function PantryScreen() {
     const [scanning, setScanning] = useState(false)
     const [date, setDate] = useState(new Date())
     const [showDatePicker, setShowDatePicker] = useState(false)
+    
+    const API_URL = "http://4.225.221.72";
+    const local_URL = 'http://localhost'
 
     async function handleAddFood(){
-        if(!foodName || !expiry){
+
+
+        if(!foodName){
             Alert.alert(
                 'Missing information.',
                 'Please enter a food name and an expiry date.'
@@ -29,7 +34,7 @@ export default function PantryScreen() {
         }
 
         try {
-            const response = await fetch(`http://4.225.221.72/pantry`, {
+            const response = await fetch(`${local_URL}/pantry`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -74,7 +79,7 @@ export default function PantryScreen() {
 
             const hostedImageUrl = 'https://i.ibb.co/LD3WskXw/PXL-20260925-141424333.jpg'
 
-            const response = await fetch(`http://4.225.221.72/scan-receipt`, {
+            const response = await fetch(`${local_URL}/scan-receipt`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': "application/json",
@@ -116,6 +121,8 @@ export default function PantryScreen() {
         )
     }
 
+    const availablePantryItems = pantryItems.filter(item => item.status === 'available')
+
     return (
         <View style={styles.container}>
 
@@ -129,7 +136,7 @@ export default function PantryScreen() {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.title}>My Pantry</Text>
-                    <Text style={styles.subtitle}>{pantryItems.length} Items</Text>
+                    <Text style={styles.subtitle}>{availablePantryItems.length} Items</Text>
                 </View>
                 <Pressable style={styles.addButton} onPress={() => setModalVisible(true)}>
                     <Text style={styles.addButtonText}>+ Add Food</Text>
@@ -137,7 +144,7 @@ export default function PantryScreen() {
             </View>
 
             <FlatList
-                data={pantryItems}
+                data={availablePantryItems}
                 renderItem={renderPantryItem}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.foodList}
