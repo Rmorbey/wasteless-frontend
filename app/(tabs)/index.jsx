@@ -20,7 +20,7 @@ export default function PantryScreen() {
     const [showDatePicker, setShowDatePicker] = useState(false)
 
     async function handleAddFood(){
-        if(!foodName || !expiry){
+        if(!foodName){
             Alert.alert(
                 'Missing information.',
                 'Please enter a food name and an expiry date.'
