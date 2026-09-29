@@ -8,6 +8,9 @@ describe("PantryScreen", () => {
     beforeEach(async () => {
         await render(<PantryScreen />)
     })
+    afterEach(() => {
+        jest.restoreAllMocks()
+    })
 
     it("renders the intial pantry items and item count", async () => {
         expect(screen.getByText("My Pantry")).toBeTruthy()
@@ -45,5 +48,16 @@ describe("PantryScreen", () => {
         expect(screen.getByText("Quantity: 4")).toBeTruthy()
         expect(screen.getByText("2026-10-15")).toBeTruthy()
         expect(screen.getByText("7 Items")).toBeTruthy()
+    })
+
+    it("shows an alert when required information is missing", async () => {
+        const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {})
+        await fireEvent.press(screen.getByText("+ Add Food"))
+        await fireEvent.press(screen.getByText("Add Manually."))
+        await fireEvent.press(screen.getByText("Add to pantry"))
+        expect(alertSpy).toHaveBeenCalledWith(
+            "Missing information.",
+            "Please enter a food name and an expiry date."
+        )
     })
 })
