@@ -222,7 +222,7 @@ export default function DonationScreen() {
                                 description = "Current needs unavailable"
                             } else if (status === "nothing") {
                                 description = "No current items listed"
-                            } else if (matches.legnth > 0) {
+                            } else if (matches.length > 0) {
                                 description = `${matches.length} pantry items match`
                             }
                             return (
