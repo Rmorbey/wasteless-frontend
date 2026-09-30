@@ -83,7 +83,7 @@ describe("DashboardScreen", () => {
         await rednerDashboard()
         await waitFor(() => {
             expect(global.fetch).toHaveBeenCalledWith(
-                "http://localhost/dashboard",
+                "http://4.225.221.72/dashboard",
                 {
                     method: "GET",
                     headers: {

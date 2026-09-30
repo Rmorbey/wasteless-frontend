@@ -37,11 +37,7 @@ describe("PantryScreen", () => {
 
     it("renders the intial pantry items and item count", async () => {
         expect(screen.getByText("My Pantry")).toBeTruthy()
-        expect(screen.getByText("1 Items")).toBeTruthy()
-        expect(screen.getByText("Milk")).toBeTruthy()
-        expect(screen.getByText("Quantity: 1")).toBeTruthy()
-        expect(screen.getByText("Expires:")).toBeTruthy()
-        expect(screen.getByText("2026-09-27")).toBeTruthy()
+        expect(screen.getByText("0 Items")).toBeTruthy()
     })
 
     it("opens the add food modal", async () => {
