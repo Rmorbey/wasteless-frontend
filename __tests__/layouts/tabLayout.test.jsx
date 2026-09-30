@@ -1,6 +1,4 @@
-import React from "react";
-import { Text, View } from "react-native";
-import { render, screen, waitFor } from "@testing-library/react-native";
+import { render, waitFor } from "@testing-library/react-native";
 
 import TabLayout from "../../app/(tabs)/_layout";
 
