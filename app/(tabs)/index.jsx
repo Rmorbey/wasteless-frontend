@@ -24,7 +24,6 @@ export default function PantryScreen() {
 
     async function handleAddFood(){
 
-
         if(!foodName){
             Alert.alert(
                 'Missing information.',
