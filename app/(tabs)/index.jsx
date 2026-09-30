@@ -121,7 +121,7 @@ export default function PantryScreen() {
         )
     }
 
-    const availablePantryItems = pantryItems.filter(item => item.status === 'available')
+    const availablePantryItems = pantryItems.filter(item => item.status === 'available' && (!item.expiry_date || new Date(item.expiry_date).setHours(0,0,0,0) >= new Date().setHours(0,0,0,0)))
 
     return (
         <View style={styles.container}>
