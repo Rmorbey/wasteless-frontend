@@ -65,5 +65,46 @@ describe("TabLayout", () => {
         expect(global.fetch).not.toHaveBeenCalled()
     })
 
-    
+    it("handles a successful pantry response", async () => {
+        const mockPantryItems = [
+            {
+                id: "1",
+                name: "Milk",
+                expiry_date: "2026-10-03",
+            },
+            {
+                id: "2",
+                name: "Bread",
+                expiry_date: "2026-10-01",
+            },
+        ]
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => mockPantryItems,
+        })
+        await render(<TabLayout />)
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledTimes(1)
+        })
+    })
+
+    it("handles pantry fetch errors", async () => {
+        const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+        global.fetch.mockRejectedValue(new Error("Database unavailable"))
+        await render(<TabLayout />)
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                "Database loading error:", "Database unavailable" 
+            )
+        })
+    })
+
+    it("renders the tabs layout", async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => [],
+        })
+        const { getByTestId } = await render(<TabLayout />)
+        expect(getByTestId("tabs")).toBeTruthy()
+    })
 })
