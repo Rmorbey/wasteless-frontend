@@ -32,7 +32,7 @@ export default function DashboardScreen() {
     const fetchAnalytics = async () => {
         try {
             setLoading(true)
-            const response = await fetch(`${local_URL}/dashboard`, {
+            const response = await fetch(`${API_URL}/dashboard`, {
                 method: 'GET',
                 headers: {
                     "Content-Type": "application/json",

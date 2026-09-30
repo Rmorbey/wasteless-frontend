@@ -33,7 +33,7 @@ export default function PantryScreen() {
         }
 
         try {
-            const response = await fetch(`${local_URL}/pantry`, {
+            const response = await fetch(`${API_URL}/pantry`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -78,7 +78,7 @@ export default function PantryScreen() {
 
             const hostedImageUrl = 'https://i.ibb.co/LD3WskXw/PXL-20260925-141424333.jpg'
 
-            const response = await fetch(`${local_URL}/scan-receipt`, {
+            const response = await fetch(`${API_URL}/scan-receipt`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': "application/json",
