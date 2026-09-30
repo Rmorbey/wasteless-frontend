@@ -112,5 +112,42 @@ describe("RootLayout", () => {
         expect(screen.getByTestId("token").props.children).toBe("no-token")
     })
 
-    
+    it("registers successfully", async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                message: "User created",
+            }),
+        })
+        await fireEvent.press(screen.getByTestId("register-button"))
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                "http://4.225.221.72/users/register",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        username: "testuser",
+                        password: "password123",
+                    }),
+                }
+            )
+        })
+        expect(global.alert).toHaveBeenCalledWith("Account created successfully! Please log in.")
+    })
+
+    it("shows and alert when registration fails", async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            json: async () => ({
+                message: "Registration failed",
+            }),
+        })
+        await fireEvent.press(screen.getByTestId("register-button"))
+        await waitFor(() => {
+            expect(global.alert).toHaveBeenCalledWith("Registration failed")
+        })
+    })
 })
