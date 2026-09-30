@@ -23,7 +23,7 @@ export default function TabLayout() {
         if (!token) return
 
         try {
-            const response = await fetch (`${local_URL}/pantry`, {
+            const response = await fetch (`${API_URL}/pantry`, {
                 method: 'GET',
                 headers: {
                     "Content-Type": "application/json",
