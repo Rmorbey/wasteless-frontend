@@ -16,10 +16,11 @@ export default function RootLayout() {
     const [userId, setUserId] = useState(null)
 
     const API_URL = "http://4.225.221.72";
+    const local_URL = 'http://localhost'
 
     const login = async (username, password) => {
         try {
-            const response = await fetch(`${API_URL}/users/login`, {
+            const response = await fetch(`${local_URL}/users/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
@@ -46,7 +47,7 @@ export default function RootLayout() {
 
     const register = async (username, password) => {
         try {
-            const response = await fetch(`${API_URL}/users/register`, {
+            const response = await fetch(`${local_URL}/users/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
