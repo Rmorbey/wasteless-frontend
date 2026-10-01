@@ -13,23 +13,34 @@ export const usePantry = () => useContext(PantryContext)
 
 export default function TabLayout() {
     const { token } = useAuth()
+
     const [ pantryItems, setPantryItems ] = useState([])
+
+    const API_URL = "http://4.225.221.72";
+    const local_URL = 'http://localhost'
 
     const fetchPantryFromBackend = async () => {
         if (!token) return
 
         try {
-            const response = await fetch ('http://localhost/pantry', {
+            const response = await fetch (`${API_URL}/pantry`, {
                 method: 'GET',
-                header: {
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 }
             })
             const data = await response.json()
+            console.log('outside response.ok pantry fetch: ', data)
 
-            if (response.ok) {
-                setPantryItems(data)
+            if (response.ok && Array.isArray(data)) {
+                console.log('inside reponse.ok fetch pantry data: ', data)
+                const sortedItems = data.sort((a, b) => {
+                    if (!a.expiry_date) return 1
+                    if (!b.expiry_date) return -1
+                    return new Date(a.expiry_date) - new Date(b.expiry_date)
+                })
+                setPantryItems(sortedItems)
             }
         } catch (error) {
             console.error("Database loading error:", error.message)

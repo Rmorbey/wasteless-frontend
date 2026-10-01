@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from 'react-native-maps'
 import { getNearbyDonationLocations } from "../../services/giveFoodApi";
 import { findDonationMatches, getNeedsStatus } from "../../utils/matchDonations";
+import { usePantry } from "./_layout";
+import { donationStyles as styles } from "../../constants/DonationStyles";
 
 export default function DonationScreen() {
     const [postcode, setPostcode] = useState('')
@@ -10,25 +12,7 @@ export default function DonationScreen() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const mapRef = useRef(null)
-
-    const mockPantryItems = [{
-            id: '1',
-            name: 'Milk',
-            quantity: '1',
-            expiry: '2026-09-27',
-        },
-        {
-            id: '2',
-            name: 'Eggs',
-            quantity: '6',
-            expiry: '2026-10-01',
-        },
-        {
-            id: '3',
-            name: 'Bread',
-            quantity: '1',
-            expiry: '2026-09-28',
-        }]
+    const { pantryItems } = usePantry()
 
     async function handleSearch() {
         if (!postcode.trim()){
@@ -97,7 +81,7 @@ export default function DonationScreen() {
     function renderLocation({ item }){
         const needsString = item.needs?.needs || ""
         const needsStatus = getNeedsStatus(needsString)
-        const matches = findDonationMatches(mockPantryItems, needsString)
+        const matches = findDonationMatches(pantryItems, needsString)
         const needs = needsStatus === "available" ? needsString.split('\n').filter(Boolean) : []
 
         return ( 
@@ -232,13 +216,13 @@ export default function DonationScreen() {
                             }
                             const needsString = location.needs?.needs || ""
                             const status = getNeedsStatus(needsString)
-                            const matches = findDonationMatches(mockPantryItems, needsString)
+                            const matches = findDonationMatches(pantryItems, needsString)
                             let description = "View donation needs"
                             if (status === "unknown") {
                                 description = "Current needs unavailable"
                             } else if (status === "nothing") {
                                 description = "No current items listed"
-                            } else if (matches.legnth > 0) {
+                            } else if (matches.length > 0) {
                                 description = `${matches.length} pantry items match`
                             }
                             return (
@@ -266,118 +250,3 @@ export default function DonationScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#fff'
-    },
-    title: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        marginBottom: 6
-    },
-    subtitle: {
-        fontSize: 15,
-        marginBottom: 6
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        gap: 10,
-        marginBottom: 15
-    },
-    input: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 10,
-        paddingHorizontal:12,
-        paddingVertical: 10
-    },
-    searchButton: {
-        backgroundColor: '#333',
-        paddingHorizontal: 18,
-        justifyContent: 'center',
-        borderRadius: 10
-    },
-    searchButtonText: {
-        color: '#fff',
-        fontWeight: 'bold'
-    },
-    map: {
-        width: '100%',
-        height: 260,
-        borderRadius: 12,
-        marginBottom: 18
-    },
-    nearbyTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10
-    },
-    card: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12
-    },
-    foodBankName: {
-        fontSize: 19,
-        fontWeight: 'bold'
-    },
-    distance: {
-        marginTop: 3,
-        opacity: 0.7
-    },
-    address: {
-        marginTop: 5,
-        marginBottom: 12
-    },
-    sectionTitle: {
-        fontWeight: 'bold',
-        marginBottom: 5
-    },
-    matchBox: {
-        marginTop: 14,
-        padding: 12,
-        backgroundColor: '#eee',
-        borderRadius: 10
-    },
-    matchTitle: {
-        fontWeight: 'bold',
-        marginBottom: 5
-    },
-    noMatch: {
-        marginTop: 10,
-        opacity: 0.6
-    },
-    unavailableBox: {
-        padding: 12,
-        marginTop: 4,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10
-    },
-    unavailableTitle: {
-        fontWeight: 'bold',
-        marginBottom: 4
-    },
-    unavailableText: {
-        marginBottom: 10
-    },
-    linkButton: {
-        backgroundColor: '#333',
-        padding: 10,
-        borderRadius: 8,
-        alignItems: 'center'
-    },
-    linkButtonText: {
-        color: '#fff',
-        fontWeight: 'bold'
-    },
-    error: {
-        marginBottom: 10
-    }
-})

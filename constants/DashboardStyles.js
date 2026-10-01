@@ -1,0 +1,125 @@
+import { StyleSheet } from "react-native";
+
+export const dashboardStyles = StyleSheet.create({
+    headerRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginVertical: 16,
+        paddingHorizontal: 20,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#0f172a",
+		letterSpacing: -0.5,
+    },
+    navButton: {
+        padding: 8,
+        backgroundColor: "#fff",
+        borderRadius: 8,
+        elevation: 1,
+    },
+    card: {
+        backgroundColor: "#ffffff",
+        borderRadius: 12,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+        shadowColor: "#0f172a",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#0f172a",
+        marginBottom: 16,
+    },
+    filterButtonGroup: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 16,
+        gap: 6,
+    },
+    filterButton: {
+        flex: 1,
+        paddingVertical: 10,
+        backgroundColor: "#f1f5f9",
+        borderRadius: 8,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#e2e8f0",
+    },
+    filterButtonText: {
+        fontSize: 12,
+        fontWeight: "700",
+        color: "#475569",
+    },
+    statsContainer: {
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    fullCard: {
+        padding: 0,
+        overflow: "hidden",
+    },
+    cardGradientWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 16,
+        gap: 14,
+    },
+    iconCircle: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    statNumber: {
+        fontSize: 24,
+        fontWeight: "800",
+        color: "#0f172a",
+    },
+    statLabel: {
+        fontSize: 13,
+        color: "#475569",
+        fontWeight: "600",
+    },
+    statsGrid: {
+        flexDirection: "row",
+        gap: 12,
+    },
+    gridNumber: {
+        fontSize: 22,
+        fontWeight: "800",
+        color: "#0f172a",
+        marginTop: 8,
+        marginBottom: 2,
+    },
+    gridLabel: {
+        fontSize: 12,
+        color: "#475569",
+        fontWeight: "600",
+    },
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#0f172a",
+        marginBottom: 6,
+    },
+    bodyText: {
+        fontSize: 13,
+        color: "#475569",
+        lineHeight: 18,
+		fontWeight: '500',
+    },
+    subtitle: {
+        fontSize: 13,
+        color: "#475569",
+		fontWeight: '500',
+    },
+});
